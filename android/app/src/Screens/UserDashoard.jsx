@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { Text, View } from 'react-native'
-import MyToast from '../Components/myToast'
+import MyToast from '../Components/MyToast'
 import Toast from 'react-native-toast-message';
 
 const UserDashoard = ({route}) => {

@@ -20,7 +20,7 @@ import BASE_URL from '../config/url.config';
 import Toast from 'react-native-toast-message';
 import {useNavigation} from '@react-navigation/native';
 import { SelectCountry } from 'react-native-element-dropdown';
-import MyToast from '../Components/myToast';
+import MyToast from '../Components/MyToast';
 const SignUp = () => {
   const [phone_no, setPhone_no] = useState(null);
   const [password, setPassword] = useState(null);

@@ -20,7 +20,7 @@ import arrow from '../Assets/Arrow.png';
 import BASE_URL from '../config/url.config';
 import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
-import MyToast from '../Components/myToast';
+import MyToast from '../Components/MyToast';
 
 const OTP = ({ route }) => {
   const { params } = route;
@@ -30,7 +30,9 @@ const OTP = ({ route }) => {
   const email = params.split(' ')[4];
   const password = params.split(' ')[3];
   const game = params.split(' ')[5];
+  
   console.log(params);
+
   const [otp, setOtp] = useState(['', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -103,8 +105,7 @@ const OTP = ({ route }) => {
         text2: err.response.data.message || err.message,
         visibilityTime: 4000,
       });
-    })
-    
+    });
   };
 
   const handleOtpChange = (text, index) => {
