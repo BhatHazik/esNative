@@ -1,5 +1,4 @@
 import React, {useEffect, useRef, useState} from 'react';
-import axios from 'axios';
 import {
   StyleSheet,
   Text,
@@ -11,29 +10,27 @@ import {
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
-  
 } from 'react-native';
-import logo from '../Assets/LOGO.png';
 import arrow from '../Assets/Arrow.png';
 import google from '../Assets/Google.png';
-import BASE_URL from '../config/url.config';
 import Toast from 'react-native-toast-message';
 import {useNavigation} from '@react-navigation/native';
-import { SelectCountry } from 'react-native-element-dropdown';
-import MyToast from '../Components/MyToast';
+import {SelectCountry} from 'react-native-element-dropdown';
+import UseAPI from '../Hooks/UseAPI';
+import AppCountryInput from '../Components/AppCountryInput';
+import AppLogo from '../Components/AppLogo';
+import useShakeAnimation from '../Hooks/UseShakeAnimation';
+import AppInput from '../Components/AppInput';
 const SignUp = () => {
-  const [phone_no, setPhone_no] = useState(null);
-  const [password, setPassword] = useState(null);
-  const [data, setData] = useState(null);
+  const [phone_no, setPhone_no] = useState('');
+  const [phoneCode, setPhoneCode] = useState('+91');
+  const [name, setName] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [game, setGame] = useState('');
-  const [country, setCountry] = useState('1');
-  // const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const {requestAPI, error, loading} = UseAPI();
   const navigate = useNavigation();
-
-
+  const { shakeAnimation, startShake } = useShakeAnimation();
 
   const local_data = [
     {
@@ -56,58 +53,73 @@ const SignUp = () => {
       image: {
         uri: `https://logowik.com/content/uploads/images/call-of-duty-mobile7368.jpg`,
       },
-    }
+    },
   ];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [error]);
 
   const handleSubmit = async () => {
-    setLoading(true);
-    await axios({
-      method: 'POST',
-      url: `${BASE_URL}/api/user/userOTP`,
-      data: {
-        phone_no: phone_no,
-        password: password,
-        email: email,
-        game: game,
-      },
-    }).then(
-      response => {
-        // await delay(4000);
-        setLoading(false);
-        // setData(`${phone_no} ${password} ${email} ${game}`);
-        // console.log(response.data, game);
-        const responseData = `${phone_no} ${password} ${email} ${game}`;
-        navigate.navigate('OTP', `SignUp ${response.data.OTP} ${responseData} `);
-      },
-      err => {
-        // await delay(4000);
-        setLoading(false);
-        setErrorMessage(err?.response?.data?.message || err.message);
-        Toast.show({
-          type: 'myErrorToast',
-          text1: 'error',
-          text2: err?.response?.data?.message || err.message,
-          visibilityTime: 4000,
-        });
+    if (!phone_no) {
+      Toast.show({
+        type: 'myErrorToast',
+        text1: 'Error',
+        text2: 'Please enter your phone number',
+      });
+      startShake();
+      return;
+    }
+    if (!name) {
+      Toast.show({
+        type: 'myErrorToast',
+        text1: 'Error',
+        text2: 'Please enter your name',
+      });
+      startShake();
+      return;
+    }
+    if (!email) {
+      Toast.show({
+        type: 'myErrorToast',
+        text1: 'Error',
+        text2: 'Please enter your email',
+      });
+      startShake();
+      return;
+    }
+    if (!game) {
+      Toast.show({
+        type: 'myErrorToast',
+        text1: 'Error',
+        text2: 'Please select your favorite game',
+      });
+      startShake();
+      return;
+    }
 
-        console.log(errorMessage);
-      },
-    );
+    const response = await requestAPI('POST', '/api/auth/signUp', {
+      country_code: phoneCode,
+      phone_number: phone_no,
+      email,
+      name,
+      game,
+    });
+
+    if (response.status === 'success') {
+      navigate.navigate('OTP', `${phone_no} ${phoneCode}`);
+    } else {
+      Toast.show({
+        type: 'myErrorToast',
+        text1: 'Error',
+        text2: response?.error || 'Invalid response from server', // Use returned error
+      });
+      startShake();
+    }
   };
+
   const handleGoogleAuth = () => {
     Toast.show({
       type: 'myInfoToast',
@@ -117,32 +129,7 @@ const SignUp = () => {
     });
   };
 
-  const shakeAnimation = useRef(new Animated.Value(0)).current;
-
-  const startShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: -10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: 0,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+  
 
   useEffect(() => {
     if (errorMessage) {
@@ -150,182 +137,102 @@ const SignUp = () => {
     }
   }, [errorMessage]);
 
- 
-
   return (
     <>
-   
-      <View style={styles.toast}>
-        <MyToast/>
-      </View>
       <ScrollView>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.wrapperSignup}>
-      
-        <View style={styles.top}>
-          <Image source={logo} style={styles.logo} />
-        </View>
-        <View style={styles.mid}>
-          <Text style={styles.signin}>Sign UP</Text>
-          <Text style={styles.bottomtext}>
-            Create your PUSG account & play real esports
-          </Text>
-          <View style={styles.inputHolder}>
-            <View style={styles.inputContainer}>
-              {errorMessage === 'Phone Number Required!' && (
-                <Animated.Text
-                  style={[
-                    styles.errorMessage,
-                    {transform: [{translateX: shakeAnimation}]},
-                  ]}>
-                  Required*
-                </Animated.Text>
-              )}
-              <TextInput
-                style={[
-                  styles.input,
-                  errorMessage === 'Phone Number Required!'
-                    ? {borderColor: 'red', borderWidth: 1}
-                    : null,
-                ]}
-                placeholder="Phone Number"
-                value={phone_no}
-                onChangeText={setPhone_no}
-                keyboardType="phone-pad"
-                placeholderTextColor="rgba(245, 247, 248, 0.75)"
-              />
-            </View>
-            <View style={styles.inputContainer}>
-              {errorMessage === 'Please provide your email address!' && (
-                <Animated.Text
-                  style={[
-                    styles.errorMessage,
-                    {transform: [{translateX: shakeAnimation}]},
-                  ]}>
-                  Required*
-                </Animated.Text>
-              )}{
-                errorMessage === 'Invalid email format' && (
-                <Animated.Text
-                  style={[
-                    styles.errorMessage,
-                    {transform: [{translateX: shakeAnimation}]},
-                  ]}>
-                  Invalid email format*
-                </Animated.Text>
-                )
-              }
-              <TextInput
-                style={[
-                  styles.input,
-                  errorMessage === 'Please provide your email address!'
-                    ? {borderColor: 'red', borderWidth: 1}
-                    : null,
-                ]}
-                placeholder="Email Address"
-                value={email}
-                onChangeText={setEmail}
-                placeholderTextColor="rgba(245, 247, 248, 0.75)"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                textContentType="emailAddress"
-                
-              />
-              
-            </View>
-            <View style={styles.inputContainer}>
-              {errorMessage === 'select an game!' && (
-                <Animated.Text
-                  style={[
-                    styles.errorMessage,
-                    {transform: [{translateX: shakeAnimation}]},
-                  ]}>
-                  Required*
-                </Animated.Text>
-              )}
-              <SelectCountry
-        style={[
-            styles.dropdown,
-            
-            errorMessage === 'select an game!'
-              ? {borderColor: 'red', borderWidth: 1}
-              : null,
-          ]}
-        selectedTextStyle={styles.selectedTextStyle}
-        placeholderStyle={styles.placeholderStyle}
-        imageStyle={styles.imageStyle}
-        inputSearchStyle={styles.inputSearchStyle}
-        iconStyle={styles.iconStyle}
-        
-        maxHeight={900}
-        value={game}
-        data={local_data}
-        valueField="value"
-        labelField="lable"
-        imageField="image"
-        placeholder="Select Game"
-        searchPlaceholder="Search..."
-        onChange={e => {
-          setGame(e.value);
-        }}
-      />
-            </View>
-            <View style={styles.inputContainer}>
-              {errorMessage === 'Password Required!' && (
-                <Animated.Text
-                  style={[
-                    styles.errorMessage,
-                    {transform: [{translateX: shakeAnimation}]},
-                  ]}>
-                  Required*
-                </Animated.Text>
-              )}
-              <TextInput
-                style={[
-                  styles.input,
-                  errorMessage === 'Password Required!'
-                    ? {borderColor: 'red', borderWidth: 1}
-                    : null,
-                ]}
-                placeholder="Set Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor="rgba(245, 247, 248, 0.75)"
-              />
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.wrapperSignup}>
+          <View style={styles.top}>
+            <AppLogo />
+          </View>
+          <Animated.View
+            style={[styles.mid, {transform: [{translateX: shakeAnimation}]}]}>
+            <Text style={styles.signin}>Sign UP</Text>
+            <Text style={styles.bottomtext}>
+              Create your ESPIRONS account & play real esports
+            </Text>
+            <View style={styles.inputHolder}>
+              <View style={styles.inputContainer}>
+                <AppCountryInput
+                  style={[styles.input]}
+                  placeholder="Phone Number"
+                  value={phone_no}
+                  onChangeText={setPhone_no}
+                  onChangeCode={setPhoneCode}
+                  keyboardType="phone-pad"
+                  placeholderTextColor="rgba(245, 247, 248, 0.75)"
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <AppInput
+                  placeholder="Your Real Name"
+                  value={name}
+                  onChangeText={setName}
+                  placeholderTextColor="rgba(245, 247, 248, 0.75)"
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <AppInput
+                  placeholder="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholderTextColor="rgba(245, 247, 248, 0.75)"
+                  keyboardType="email-address"
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <SelectCountry
+                  style={[styles.dropdown]}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  placeholderStyle={styles.placeholderStyle}
+                  imageStyle={styles.imageStyle}
+                  inputSearchStyle={styles.inputSearchStyle}
+                  iconStyle={styles.iconStyle}
+                  maxHeight={900}
+                  value={game}
+                  data={local_data}
+                  valueField="value"
+                  labelField="lable"
+                  imageField="image"
+                  placeholder="Select Game"
+                  searchPlaceholder="Search..."
+                  onChange={e => {
+                    setGame(e.value);
+                  }}
+                />
+              </View>
 
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={loading ? null : handleSubmit}>
-              <Text style={styles.submitText}>Proceed To Join</Text>
-              {loading ? (
-                <ActivityIndicator size="large" color="#45474B" />
-              ) : (
-                <Image source={arrow} style={styles.arrow} />
-              )}
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={loading ? null : handleSubmit}>
+                <Text style={styles.submitText}>Proceed To Join</Text>
+                {loading ? (
+                  <ActivityIndicator size="large" color="#45474B" />
+                ) : (
+                  <Image source={arrow} style={styles.arrow} />
+                )}
+              </TouchableOpacity>
+            </View>
+            <View style={styles.bottomForm}>
+              <Text style={styles.orText}>OR</Text>
+              <TouchableOpacity
+                style={styles.googleAuth}
+                onPress={handleGoogleAuth}>
+                <Image source={google} />
+                <Text style={styles.googleText}>Sign Up with Google</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+          <View style={styles.bottom}>
+            <TouchableOpacity>
+              <Text style={styles.bottomtext}>Terms and conditions apply</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigate.navigate('signIn')}>
+              <Text style={styles.bottomtext}>I already have an account?</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.googleAuthHolder}>
-            <Text style={styles.orText}>OR</Text>
-            <TouchableOpacity
-              style={styles.googleAuth}
-              onPress={handleGoogleAuth}>
-              <Image source={google} />
-              <Text style={styles.googleText}>Sign UP with Google</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={styles.bottom}>
-          <TouchableOpacity>
-            <Text style={styles.bottomtext}>Terms and conditions apply</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigate.navigate('signIn')}>
-            <Text style={styles.bottomtext}>I already have an account?</Text>
-          </TouchableOpacity>
-        </View>
-        
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
       </ScrollView>
     </>
   );
@@ -344,11 +251,12 @@ const styles = StyleSheet.create({
   },
   mid: {
     backgroundColor: '#D9D9D9',
-    height: 600,
+    height: 'auto',
     borderRadius: 10,
     paddingLeft: 12,
     paddingTop: 7,
     paddingRight: 12,
+    paddingBottom: 18,
   },
   signin: {
     fontFamily: 'Teko-SemiBold',
@@ -360,12 +268,16 @@ const styles = StyleSheet.create({
   bottomtext: {
     color: '#E1C124',
     fontFamily: 'Teko-Regular',
+    fontSize: 16,
+    backgroundColor: 'transparent',
+    padding: 1,
+    paddingHorizontal: 4,
+    borderRadius: 4,
   },
   inputHolder: {
     marginTop: 18,
     gap: 20,
     height: 415,
-    // backgroundColor:"blue"
   },
   inputContainer: {
     marginBottom: 0,
@@ -376,16 +288,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     color: '#fff',
     fontFamily: 'Teko-SemiBold',
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: -0.78,
-    // borderRadius: 5,
     position: 'relative',
   },
   errorMessage: {
     color: 'red',
     fontFamily: 'Teko-SemiBold',
     position: 'absolute',
-    top: -20, // Position the error message above the input field
+    top: -20,
     left: 10,
   },
   submitButton: {
@@ -415,21 +326,27 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    // backgroundColor:"blue"
+  },
+  bottomForm: {
+    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   orText: {
     fontFamily: 'Teko-SemiBold',
-    fontSize: 20,
+    fontSize: 25,
     color: '#45474B',
+    marginTop: 4,
   },
   googleAuth: {
-    height: 50,
+    height: 60,
     backgroundColor: '#45474B',
     flexDirection: 'row',
     alignItems: 'center',
     width: 250,
     paddingLeft: 10,
-    borderRadius: 10,
+    borderRadius: 20,
+    marginTop: 5,
   },
   googleText: {
     fontFamily: 'Teko-SemiBold',
@@ -438,58 +355,51 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     color: '#FFFFFF',
   },
-  bottom: {
-    height: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  bottom: {height: 100, alignItems: 'center', justifyContent: 'center'},
   logo: {
     height: 90,
     width: 100,
     resizeMode: 'contain',
     zIndex: 90,
   },
-  placeholderStyle:{
+  placeholderStyle: {
     color: 'rgba(245, 247, 248, 0.75)',
     fontFamily: 'Teko-SemiBold',
-    fontSize: 18,
+    fontSize: 21,
     letterSpacing: -0.78,
-    backgroundColor:"#45474B",
-    
+    backgroundColor: '#45474B',
   },
-  selectedTextStyle:{
+  selectedTextStyle: {
     color: 'rgba(245, 247, 248, 0.75)',
-    backgroundColor:"#45474B",
-    borderRadius:5,
-    paddingLeft:10,
-    height:25,
+    backgroundColor: '#45474B',
+    borderRadius: 5,
+    paddingLeft: 10,
+    height: 25,
     fontFamily: 'Teko-SemiBold',
-    fontSize: 18,
-    marginTop:5,
-    marginLeft:5,
+    fontSize: 20,
+    marginTop: 5,
+    marginLeft: 5,
     letterSpacing: -0.78,
   },
-  dropdown:{
+  dropdown: {
     backgroundColor: '#45474B',
     height: 65,
     paddingHorizontal: 15,
     color: 'black',
     fontFamily: 'Teko-SemiBold',
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: -0.78,
-    // borderRadius: 5,
     position: 'relative',
   },
-  imageStyle:{
-    width:40,
-    borderRadius:10,
-    height:40,
-    
+  imageStyle: {
+    width: 40,
+    borderRadius: 10,
+    height: 40,
   },
-  iconStyle:{
-    height:30,
-    width:40
-  }
+  iconStyle: {
+    height: 30,
+    width: 40,
+  },
 });
 
 export default SignUp;

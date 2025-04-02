@@ -6,6 +6,7 @@ import SignIn from './android/app/src/Screens/SignIn';
 import SignUp from './android/app/src/Screens/SignUp';
 import OTP from './android/app/src/Screens/OTP';
 import UserDashoard from './android/app/src/Screens/UserDashoard';
+import MyToast from './android/app/src/Components/MyToast';
 
 
 // import Toast from 'react-native-toast-message';
@@ -15,6 +16,9 @@ const Stack = createNativeStackNavigator();
 const App: React.FC = () => {
   return (
     <View style={styles.container}>
+      <View style={styles.toast}>
+        <MyToast />
+      </View>
       <NavigationContainer>
         <Stack.Navigator  
         initialRouteName="signIn"
@@ -54,6 +58,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff', // Set background color to white
+  },
+  toast: {
+    zIndex: 100,
   },
 });
 

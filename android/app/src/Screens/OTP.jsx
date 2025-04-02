@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,148 +12,77 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
 } from 'react-native';
-import logo from '../Assets/LOGO.png';
 import arrow from '../Assets/Arrow.png';
-import BASE_URL from '../config/url.config';
 import Toast from 'react-native-toast-message';
-import { useNavigation } from '@react-navigation/native';
-import MyToast from '../Components/MyToast';
+import {useNavigation} from '@react-navigation/native';
+import UseAPI from '../Hooks/UseAPI';
+import useShakeAnimation from '../Hooks/UseShakeAnimation';
+import AppLogo from '../Components/AppLogo';
 
-const OTP = ({ route }) => {
-  const { params } = route;
-  const FromComponent = params.split(' ')[0];
-  const OTPMessage = params.split(' ')[1];
-  const phone_no = params.split(' ')[2];
-  const email = params.split(' ')[4];
-  const password = params.split(' ')[3];
-  const game = params.split(' ')[5];
-  
-  console.log(params);
-
+const OTP = ({route}) => {
+  const {params} = route;
+  const phone_no = params.split(' ')[0];
+  const phoneCode = params.split(' ')[1];
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    Toast.show({
-      type: 'mySuccussToast',
-      text1: 'OTP RECEIVED',
-      text2: `Your OTP is ${OTPMessage}`,
-      visibilityTime: 8000,
-    });
-  }, [OTPMessage]);
-
-  
+  const {requestAPI, error, loading} = UseAPI();
+  const {shakeAnimation, startShake} = useShakeAnimation();
   const navigate = useNavigation();
 
   const inputRefs = useRef([]);
 
-  const handleSignUpSubmit = async () => {
+  useEffect(() => {
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [error]);
+
+  const handleSubmit = async () => {
     const otpString = otp.join('');
-    console.log("signUp hited")
-    setLoading(true);
-    await axios({
-        method:"POST",
-        url:`${BASE_URL}/api/user/userRegisterVerify`,
-        data:{
-            phone_no:phone_no,
-            password:password,
-            email,email,
-            game:game,
-            givenOTP:otpString
-        }
-    }).then((response)=>{
-        setLoading(false);
-        navigate.navigate('userDashboard', "Account Created!");
-    },(err)=>{
-        setLoading(false);
-      setErrorMessage(err.response.data.message || err.message);
+    if (!otpString || otpString.length !== 4) {
       Toast.show({
         type: 'myErrorToast',
         text1: 'Error',
-        text2: err.response.data.message || err.message,
-        visibilityTime: 4000,
+        text2: 'Please enter 4 digit OTP',
       });
-    })
-  };
-
-  const handleSignInSubmit = async () => {
-    const otpString = otp.join('');
-    console.log(otpString,"signin hited");
-    setLoading(true);
-
-    await axios({
-        method:"POST",
-        url:`${BASE_URL}/api/user/userLoginVerifyOTP`,
-        data:{
-            phone_no:phone_no,
-            password:password,
-            givenOTP:otpString
-        }
-    }).then((response)=>{
-        setLoading(false)
-        navigate.navigate('userDashboard', "Logged in!");
-    },(err)=>{
-        setLoading(false);
-      setErrorMessage(err.response.data.message || err.message);
-      Toast.show({
-        type: 'myErrorToast',
-        text1: 'Error',
-        text2: err.response.data.message || err.message,
-        visibilityTime: 4000,
-      });
+      startShake();
+      return;
+    }
+    const response = await requestAPI('POST', '/api/auth/verifyOTP', {
+      phone_number: phone_no,
+      country_code: phoneCode,
+      otp: otpString,
     });
+    if (response.status === 'success') {
+      navigate.navigate('userDashboard', response.message);
+    } else {
+      Toast.show({
+        type: 'myErrorToast',
+        text1: 'Error',
+        text2: response?.error || 'Invalid response from server',
+      });
+      startShake();
+    }
   };
 
   const handleOtpChange = (text, index) => {
     const newOtp = [...otp];
     newOtp[index] = text;
-
-    // Move to the next input field if text is entered
     if (text && index < 3) {
       inputRefs.current[index + 1]?.focus();
     }
-    // Move to the previous input field if text is deleted and it's not the first input
     if (!text && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
     setOtp(newOtp);
   };
 
-  const handleKeyPress = ({ nativeEvent: { key } }, index) => {
-    // Handle backspace to focus previous input field
+  const handleKeyPress = ({nativeEvent: {key}}, index) => {
     if (key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
-  };
-
-  const shakeAnimation = useRef(new Animated.Value(0)).current;
-
-  const startShake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: -10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: 0,
-        duration: 50,
-        useNativeDriver: true,
-      }),
-    ]).start();
   };
 
   useEffect(() => {
@@ -165,20 +93,17 @@ const OTP = ({ route }) => {
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.wrapperSignup}
-      >
+        style={styles.wrapperSignup}>
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps='handled'
-        >
-            <MyToast/>
+          keyboardShouldPersistTaps="handled">
           <View style={styles.top}>
-            <Image source={logo} style={styles.logo} />
+            <AppLogo />
           </View>
-          <View style={styles.mid}>
+          <Animated.View
+            style={[styles.mid, {transform: [{translateX: shakeAnimation}]}]}>
             <Text style={styles.signin}>OTP</Text>
             <Text style={styles.bottomtext}>Provide OTP to continue</Text>
             <View style={styles.inputHolder}>
@@ -189,18 +114,18 @@ const OTP = ({ route }) => {
                     style={styles.otpInput}
                     maxLength={1}
                     value={value}
-                    onChangeText={(text) => handleOtpChange(text, index)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    ref={(ref) => inputRefs.current[index] = ref}
+                    onChangeText={text => handleOtpChange(text, index)}
+                    onKeyPress={e => handleKeyPress(e, index)}
+                    ref={ref => (inputRefs.current[index] = ref)}
                     keyboardType="number-pad"
                     textAlign="center"
+                    placeholder="_"
                   />
                 ))}
               </View>
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={loading ? null : FromComponent === 'SignIn' ?  handleSignInSubmit: FromComponent === 'SignUp' && handleSignUpSubmit }
-              >
+                onPress={handleSubmit}>
                 <Text style={styles.submitText}>Confirm OTP</Text>
                 {loading ? (
                   <ActivityIndicator size="large" color="#45474B" />
@@ -209,9 +134,9 @@ const OTP = ({ route }) => {
                 )}
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
           <View style={styles.bottom}>
-            <TouchableOpacity> 
+            <TouchableOpacity>
               <Text style={styles.bottomtext}>Terms and conditions apply</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigate.goBack()}>
@@ -254,6 +179,7 @@ const styles = StyleSheet.create({
     letterSpacing: -3,
   },
   bottomtext: {
+    fontSize: 16,
     color: '#E1C124',
     fontFamily: 'Teko-Regular',
   },
@@ -264,16 +190,16 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap:10
+    gap: 13,
   },
   otpInput: {
     backgroundColor: '#45474B',
-    height: 75,
-    width: 72,
+    height: 78,
+    width: 78,
     color: '#fff',
     fontFamily: 'Teko-SemiBold',
     fontSize: 40,
-    paddingTop:20,
+    paddingTop: 20,
     textAlign: 'center',
     borderRadius: 18,
   },
@@ -299,7 +225,7 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   bottom: {
-    height: 80,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
   },

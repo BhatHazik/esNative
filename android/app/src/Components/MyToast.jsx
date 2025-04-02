@@ -7,57 +7,6 @@ const MyToast = () => {
 
 
 const toastConfig = {
-    // // Custom success toast
-    // success: (props) => (
-    //   <BaseToast
-    //     {...props}
-    //     style={{ borderLeftColor: 'green', borderWidth: 2, backgroundColor: 'lightgreen' }}
-    //     contentContainerStyle={{ paddingHorizontal: 15 }}
-    //     text1Style={{
-    //       fontSize: 15,
-    //       fontWeight: '600',
-    //       color: 'green'
-    //     }}
-    //     text2Style={{
-    //       fontSize: 13,
-    //       color: 'darkgreen'
-    //     }}
-    //   />
-    // ),
-    // // Custom error toast
-    // error: (props) => (
-    //   <ErrorToast
-    //     {...props}
-    //     style={{ borderLeftColor: 'red', borderWidth: 2, backgroundColor: 'lightcoral' }}
-    //     text1Style={{
-    //       fontSize: 17,
-    //       fontWeight: '600',
-    //       color: 'darkred'
-    //     }}
-    //     text2Style={{
-    //       fontSize: 15,
-    //       color: 'red'
-    //     }}
-    //   />
-    // ),
-    // // Custom info toast
-    // info: (props) => (
-    //   <BaseToast
-    //     {...props}
-    //     style={{ borderLeftColor: 'blue', borderWidth: 2, backgroundColor: 'lightblue' }}
-    //     contentContainerStyle={{ paddingHorizontal: 15 }}
-    //     text1Style={{
-    //       fontSize: 15,
-    //       fontWeight: '600',
-    //       color: 'blue'
-    //     }}
-    //     text2Style={{
-    //       fontSize: 13,
-    //       color: 'darkblue'
-    //     }}
-    //   />
-    // ),
-    // Custom toast
     myErrorToast: ({text1, text2, props}) => (
       <View
         style={{

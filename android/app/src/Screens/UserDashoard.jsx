@@ -1,31 +1,36 @@
-import React, { useEffect } from 'react'
-import { Text, View } from 'react-native'
-import MyToast from '../Components/MyToast'
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import Toast from 'react-native-toast-message';
+import Navbar from '../Components/Navbar';
+import ProfileDrawer from '../Components/ProfileDrawer';
 
-const UserDashoard = ({route}) => {
-    const { params } = route;
-console.log(params);  
-    const Message = params
+const UserDashboard = () => {
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
-    useEffect(() => {
-        Toast.show({
-          type: 'mySuccussToast',
-          text1: 'Succuss',
-          text2: `${Message}`,
-          visibilityTime: 8000,
-        });
-      }, [Message]);                                                                                                                                          
+  const handleProfilePress = () => {
+    setDrawerVisible(true);
+  };
 
-
-
-
+  const handleCloseDrawer = () => {
+    setDrawerVisible(false);
+  };
   return (
-    <View>
-        <MyToast/>
-        <Text style={{color:"green"}}>This is the user dashboard!</Text>
-        </View>
-  )
-}
+    <>
+      <Navbar backgroundColor="#45474b" ticketCount={16} onTicketPress={() => Toast.show({ type: 'info', text1: 'Tickets Clicked' })} onProfilePress={handleProfilePress} />
+      <ProfileDrawer visible={drawerVisible} onClose={handleCloseDrawer} />
+      <View style={styles.container}>
+        
+      </View>
+    </>
+  );
+};
 
-export default UserDashoard
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 20,
+  },
+});
+
+export default UserDashboard;
