@@ -16,7 +16,7 @@ const Navbar = ({
   
   return (
     <View style={[styles.container, { backgroundColor }, style]}>
-      <ProfileDrawer visible={drawerVisible} onClose={handleCloseDrawer} />
+      {/* <ProfileDrawer visible={drawerVisible} onClose={handleCloseDrawer} /> */}
       {/* Left Side: Logo */}
       <View style={styles.leftContainer}>
         <Image source={logoSource} style={styles.logo} />
